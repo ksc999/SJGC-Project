@@ -6,7 +6,7 @@ from scipy.optimize import minimize
 
 class MyGPR:
     def __init__(self, data_path, train_ratio=0.5, selection_mode='trunctated', kernel_name='rbf',
-                 fit_param_times=100):
+                 fit_param_times=1000):
         data = pd.read_csv(data_path)
         money = data['Close/Last']
         money = list(map(lambda str_money: float(str_money[1:]), money))    # convert str to float
@@ -49,7 +49,7 @@ class MyGPR:
             
     def _get_kernel(self):
         if self.kernel_name == 'rbf':   
-            def kernel(x_1, x_2, param):
+            def kernel(param, x_1, x_2):
                 # the distance matrix is of the size (x_1, x_2)
                 distance_matrix = np.sum(x_1**2).reshape(-1, 1) + np.sum(x_2**2) \
                                     - 2 * np.dot(x_1.reshape(-1, 1), x_2.reshape(1, -1))
@@ -59,12 +59,12 @@ class MyGPR:
         
     def _get_kernel_loss(self):
         if self.kernel_name == 'rbf':
-            def kernel_loss(param):
-                K = self.kernel(self.x_train, self.y_train, param) \
-                        + param[2] * np.eye(len(self.x_train))
-                loss = 0.5 * np.dot(self.y_train, np.linalg.inv(K) @ self.y_train) \
+            def kernel_loss(param, x, y):
+                K = self.kernel(param, x, x) \
+                        + param[2] * np.eye(len(x))
+                loss = 0.5 * np.dot(y, np.linalg.inv(K) @ y) \
                         + 0.5 * np.linalg.slogdet(K)[1] \
-                        + 0.5 * len(self.x_train) * np.log(2 * np.pi)
+                        + 0.5 * len(x) * np.log(2 * np.pi)
                 return loss.ravel()
             
         return kernel_loss
@@ -86,7 +86,8 @@ class MyGPR:
         fun_min = sys.float_info.max
         optimal_result = []
         for args_init in args_init_list.T:
-            result = minimize(self.kernel_loss, args_init, bounds=args_bound)
+            result = minimize(self.kernel_loss, args_init, bounds=args_bound,
+                              args=(self.x_train, self.y_train))
             if result.fun < fun_min:
                 fun_min = result.fun
                 optimal_result = result.x    
