@@ -10,7 +10,7 @@ class MyGPR:
             self, data_path,
             train_ratio=0.9,
             selection_mode='trunctated',
-            kernel_name='rbf',
+            kernel_name='sek',
             fit_param_times=10,
             log_sample_flag=True
         ):
@@ -49,31 +49,55 @@ class MyGPR:
             self.y_test = self.y[self.x_test]
     
     def _get_kernel_params(self):
-        if self.kernel_name == 'rbf':
-            # param = {'l': 6.2949, 'sigma_f': 70.6718, 'sigma_n': 0.1}
-            # param_bound = {'l': (1e-1, 1e2), 'sigma_f': (1e-2, 1e2), 'sigma_n': (1e-10, 1e-3)}
-            param = {'l': 1.1187343193934338, 'sigma_f': 16.20733936502278}
-            param_bound = {'l': (1e-1, 1e3), 'sigma_f': (1e-1, 1e2)}
-            
+        if self.kernel_name == 'sek':   # squared exponential kernel
+            param = {'l': 1.12, 'sigma': 16}
+            param_bound = {'l': (1e-1, 1e3), 'sigma': (1e-1, 1e2)}
+        elif self.kernel_name == 'pk':  # periodic kernel
+            param = {'l': 1.12, 'sigma': 16, 'p': 10}
+            param_bound = {'l': (1e-1, 1e3), 'sigma': (1e-1, 1e3), 'p': (10-2, 1e2)}
+        elif self.kernel_name == 'lpk': # local periodic kernel
+            param = {'l_se': 1.12, 'l_p': 0.1, 'p': 19, 'sigma': 16.1}
+            param_bound = {'l_se': (1e-1, 1e3), 'l_p': (1e-1, 1e3), \
+                            'p': (10-1, 1e3), 'sigma': (1e-1, 1e3)}
         return param, param_bound    
             
     def _get_kernel(self):
-        if self.kernel_name == 'rbf':   
+        if self.kernel_name == 'sek':   
             def kernel(param, x_1, x_2):
-                # the distance matrix is of the size (x_1, x_2)
+                # L2 distance matrix of the size (x_1, x_2)
                 distance_matrix = np.power(x_1, 2).reshape(-1, 1) + np.power(x_2, 2) \
                                     - 2 * np.dot(x_1.reshape(-1, 1), x_2.reshape(1, -1))
-                return param[1]**2 * np.exp(-0.5 / param[0]**2 * distance_matrix)
-            
+                result =  param[1]**2 * np.exp(-0.5 / param[0]**2 * distance_matrix)
+                return result
+        elif self.kernel_name == 'pk':
+            def kernel(param, x_1, x_2):
+                # L1 distance matrix of the size (x_1, x_2)
+                distance_matrix = np.abs(x_1.reshape(-1, 1) - x_2)
+                result = distance_matrix * np.pi / param[2]
+                result = 2 * np.sin(result)**2 / param[0]**2
+                result = param[1] * np.exp(-result)
+                return result
+        elif self.kernel_name == 'lpk':
+            def kernel(param, x_1, x_2):
+                # L1 distance matrix of the size (x_1, x_2)
+                dis_L1 = np.abs(x_1.reshape(-1, 1) - x_2)
+                # L2 distance matrix of the size (x_1, x_2)
+                dis_L2 = np.power(x_1, 2).reshape(-1, 1) + np.power(x_2, 2) \
+                                    - 2 * np.dot(x_1.reshape(-1, 1), x_2.reshape(1, -1))
+                cof_pk = dis_L1 * np.pi / param[2]
+                cof_pk = 2 * np.sin(cof_pk)**2 / param[1]**2
+                cof_sek = 0.5 / param[0]**2 * dis_L2
+                result = param[3] * np.exp(-cof_pk - cof_sek)
+                return result 
         return kernel
         
     def _get_kernel_loss(self):
-        if self.kernel_name == 'rbf':
+        # use MLE to estimate parameters
+        if self.kernel_name in ['sek', 'pk', 'lpk']:
             def kernel_loss(param, x, y):
                 K = self.kernel(param, x, x) + 1e-8 * np.eye(len(x))
                 loss = 0.5 * np.dot(y, np.linalg.inv(K) @ y) + 0.5 * np.linalg.slogdet(K)[1] 
-                return loss.ravel()
-            
+                return loss.ravel()    
         return kernel_loss
     
     def fit_params(self):
@@ -115,16 +139,17 @@ class MyGPR:
         self.cov_test = K_test_test - K_test_train @ np.linalg.inv(K_train_train) @ K_test_train.T
     
     def draw_prediction(self, img_name, prefix='./imgs/', fig_size=(20, 10)):
-        var = np.diag(self.cov_test)
-        CI_upper_bound_test = self.mu_test + 1.96 * np.sqrt(var)
-        CI_lower_bound_test = self.mu_test - 1.96 * np.sqrt(var)
+        self.var = np.diag(self.cov_test)
+        print(np.max(self.var), ' ', np.min(self.var))
+        CI_upper_bound_test = self.mu_test + 1.96 * np.sqrt(self.var)
+        CI_lower_bound_test = self.mu_test - 1.96 * np.sqrt(self.var)
         CI_upper_bound = np.zeros(len(self.x))
         CI_upper_bound[self.x_test] = CI_upper_bound_test
         CI_upper_bound[self.x_train] = self.y_train
         CI_lower_bound = np.zeros(len(self.x))
         CI_lower_bound[self.x_test] = CI_lower_bound_test
         CI_lower_bound[self.x_train] = self.y_train
-        plt.figure(figsize=fig_size,dpi=90)
+        plt.figure(figsize=fig_size, dpi=90)
         if self.selection_mode == 'trunctated':
             plt.plot(self.x_train, self.y_train, 'k', label='train values')
             plt.plot(np.insert(self.x_test, 0, self.x_train[-1]), 
@@ -143,7 +168,8 @@ class MyGPR:
             plt.plot(self.x, self.y, 'r--', label='true values', alpha=0.8)
             plt.fill_between(self.x, CI_lower_bound, CI_upper_bound, alpha=0.3)
         plt.legend(prop={'size': 18})
-        plt.savefig(prefix + img_name)    
+        plt.tick_params(labelsize=18)
+        plt.savefig(prefix + img_name, bbox_inches='tight')    
 
 
     
