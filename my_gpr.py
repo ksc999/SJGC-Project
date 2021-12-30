@@ -137,12 +137,11 @@ class MyGPR:
         K_test_test = self.kernel(param, self.x_test, self.x_test)
         self.mu_test = K_test_train @ np.linalg.inv(K_train_train) @ self.y_train
         self.cov_test = K_test_test - K_test_train @ np.linalg.inv(K_train_train) @ K_test_train.T
-    
+        self.var_test = np.diag(self.cov_test)
+        
     def draw_prediction(self, img_name, prefix='./imgs/', fig_size=(20, 10)):
-        self.var = np.diag(self.cov_test)
-        print(np.max(self.var), ' ', np.min(self.var))
-        CI_upper_bound_test = self.mu_test + 1.96 * np.sqrt(self.var)
-        CI_lower_bound_test = self.mu_test - 1.96 * np.sqrt(self.var)
+        CI_upper_bound_test = self.mu_test + 1.96 * np.sqrt(self.var_test)
+        CI_lower_bound_test = self.mu_test - 1.96 * np.sqrt(self.var_test)
         CI_upper_bound = np.zeros(len(self.x))
         CI_upper_bound[self.x_test] = CI_upper_bound_test
         CI_upper_bound[self.x_train] = self.y_train
@@ -169,7 +168,30 @@ class MyGPR:
             plt.fill_between(self.x, CI_lower_bound, CI_upper_bound, alpha=0.3)
         plt.legend(prop={'size': 18})
         plt.tick_params(labelsize=18)
-        plt.savefig(prefix + img_name, bbox_inches='tight')    
+        plt.savefig(prefix + img_name, bbox_inches='tight')   
+        
+    def seqeuntial_predict(self):
+        param = list(self.kernel_param.values())
+        if self.selection_mode == 'trunctated':
+            sequetial_x_train = self.x_train.copy()
+            sequetial_y_train = self.y_train.copy()
+            self.mu_test = []
+            self.var_test = []
+            for x in self.x_test:
+                K_sequence = self.kernel(param, sequetial_x_train, sequetial_x_train)
+                K_x = self.kernel(param, x, x)
+                K_x_sequence = self.kernel(param, x, sequetial_x_train)
+                mu = K_x_sequence @ np.linalg.inv(K_sequence) @ sequetial_y_train
+                var = K_x - K_x_sequence @ np.linalg.inv(K_sequence) @ K_x_sequence.T
+                mu = float(np.squeeze(mu))
+                var = float(np.squeeze(var))
+                self.mu_test.append(mu)
+                self.var_test.append(var)
+                sequetial_x_train = np.append(sequetial_x_train, x)[1:]
+                sequetial_y_train = np.append(sequetial_y_train, mu)[1:]
+            self.mu_test = np.array(self.mu_test)
+            self.var_test = np.array(self.var_test)
+         
 
 
     
