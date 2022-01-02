@@ -188,7 +188,7 @@ class MyGPR:
                 self.mu_test.append(mu)
                 self.var_test.append(var)
                 sequetial_x_train = np.append(sequetial_x_train, x)[1:]
-                sequetial_y_train = np.append(sequetial_y_train, mu)[1:]
+                sequetial_y_train = np.append(sequetial_y_train, self.y[x])[1:]
             self.mu_test = np.array(self.mu_test)
             self.var_test = np.array(self.var_test)
          
