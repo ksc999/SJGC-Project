@@ -37,7 +37,7 @@
 - [PlantUML类图介绍](https://plantuml.com/zh/class-diagram)
 
 生成UML类图后，只需在<code>.md</code>文件中附上图片链接，并在链接前加上<code>//https:</code>，即可显示。简单示例如下：
-<div align=center>![UML示例图](https://www.plantuml.com/plantuml/png/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000)
+<div align=center>![UML示例图](https://www.plantuml.com/plantuml/png/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000)</div>
 
 ## 有关<code>.md</code>文件中图片显示的问题
 
