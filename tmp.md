@@ -37,19 +37,31 @@
 - [PlantUML类图介绍](https://plantuml.com/zh/class-diagram)
 
 生成UML类图后，只需在<code>.md</code>文件中附上图片链接，并在链接前加上<code>//https:</code>，即可显示。简单示例如下：
-<div align=center>![UML示例图](https://www.plantuml.com/plantuml/png/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000)</div>
+<div align="center">    
+<img src="https://www.plantuml.com/plantuml/png/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000" width=120 />
+</div>
+
+源代码如下：
+```html
+<div align="center">    
+<img src="https://www.plantuml.com/plantuml/png/SyfFKj2rKt3CoKnELR1Io4ZDoSa70000" width=120 />
+</div>
+```
 
 ## 有关<code>.md</code>文件中图片显示的问题
 
 为了使得图片能够在非本地（如GitHub）能正常显示，你可能需要手动写下图片路径：
 
 例如现在我处于<code>C++/样例/README.md</code>，想要去显示位于<code>MATLAB/快速入门/test_image/</code>中的<code>img1.jpg</code>，一个恰当的做法如下：
-![example](../../MATLAB/快速入门/test_image/img1.jpg)
+<div align="center">    
+<img src="../../MATLAB/快速入门/test_image/img1.jpg" width=80 />
+</div>
+
+源代码如下：
+```html
+<div align="center">    
+<img src="../../MATLAB/快速入门/test_image/img1.jpg" width=120 />
+</div>
+```
 
 亦即，你需要把绝对路径改成相对路径。
-
-```c++
-int main() {
-    return 0;
-}
-```
