@@ -9,7 +9,7 @@ class MyGPR:
     def __init__(
             self, data_path,
             train_ratio=0.9,
-            selection_mode='trunctated',
+            selection_mode='truncated',
             kernel_name='sek',
             fit_param_times=10,
             log_sample_flag=True
@@ -33,8 +33,8 @@ class MyGPR:
         self.kernel_loss = self._get_kernel_loss()
         
     def _divide_data(self):
-        # 'trunctated' means that GPR is taken as a sequential prediction
-        if self.selection_mode == 'trunctated': 
+        # 'truncated' means that GPR is taken as a sequential prediction
+        if self.selection_mode == 'truncated': 
             dividing_line = int(len(self.x) * self.train_ratio)
             self.x_train = self.x[:dividing_line]
             self.x_test = self.x[dividing_line:]
@@ -149,7 +149,7 @@ class MyGPR:
         CI_lower_bound[self.x_test] = CI_lower_bound_test
         CI_lower_bound[self.x_train] = self.y_train
         plt.figure(figsize=fig_size, dpi=90)
-        if self.selection_mode == 'trunctated':
+        if self.selection_mode == 'truncated':
             plt.plot(self.x_train, self.y_train, 'k', label='train values')
             plt.plot(np.insert(self.x_test, 0, self.x_train[-1]), 
                      np.insert(self.y_test, 0, self.y_train[-1]), 
@@ -172,7 +172,7 @@ class MyGPR:
         
     def seqeuntial_predict(self):
         param = list(self.kernel_param.values())
-        if self.selection_mode == 'trunctated':
+        if self.selection_mode == 'truncated':
             sequetial_x_train = self.x_train.copy()
             sequetial_y_train = self.y_train.copy()
             self.mu_test = []

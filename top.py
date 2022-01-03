@@ -21,7 +21,7 @@ def tackle_hyperparameters(hp, prefix='./hyperparameters/'):
             log_sample_flag=hp['log_sample_flag']
         )
         gpr.fit_params()
-        if hp['sequential_predict_flag']:
+        if hp['selection_mode'] == 'truncated' and hp['sequential_predict_flag']:
             gpr.seqeuntial_predict()
         else:
             gpr.predict()
