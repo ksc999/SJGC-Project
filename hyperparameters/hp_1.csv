@@ -1,5 +1,4 @@
 name,expansion,train_ratio,selection_mode,kernel_name,fit_param_times,log_sample_flag,sequential_predict_flag
-adsk,1Y,0.5,truncated,lpk,100,1,1
-adsk,1Y,0.7,truncated,lpk,100,1,1
-adsk,1Y,0.9,truncated,lpk,100,1,1
-adsk,1Y,0.95,truncated,lpk,100,1,1
+adsk,1Y,0.02,truncated,lpk,100,1,1
+adsk,1Y,0.05,truncated,lpk,100,1,1
+adsk,1Y,0.08,truncated,lpk,100,1,1
